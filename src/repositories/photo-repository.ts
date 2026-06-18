@@ -83,6 +83,19 @@ export async function deletePhoto(photoId: string, travelDayId: string) {
   });
 }
 
+export async function findPhotosByNoteId(noteId: string, travelDayId: string) {
+  return prisma.photo.findMany({
+    where: { noteId, travelDayId },
+    select: { id: true, storagePath: true },
+  });
+}
+
+export async function deletePhotosByNoteId(noteId: string, travelDayId: string) {
+  return prisma.photo.deleteMany({
+    where: { noteId, travelDayId },
+  });
+}
+
 export async function countPhotosForUser(userId: string): Promise<number> {
   return prisma.photo.count({
     where: { travelDay: { trip: { userId } } },

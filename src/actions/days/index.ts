@@ -9,6 +9,11 @@ import { ROUTES } from "@/lib/constants";
 import { parseFormDate } from "@/lib/format";
 import { createNote, deleteNote as deleteNoteRecord } from "@/repositories/note-repository";
 import {
+  deletePhotosByNoteId,
+  findPhotosByNoteId,
+} from "@/repositories/photo-repository";
+import { deleteTravelPhoto } from "@/lib/storage/photos";
+import {
   createTravelDayForTrip,
   deleteTravelDayForUser,
   getTravelDayForUser,
@@ -30,6 +35,7 @@ function readIds(formData: FormData) {
 function revalidateDayPaths(tripId: string, dayId?: string) {
   revalidatePath(ROUTES.trip(tripId));
   revalidatePath(ROUTES.dashboard);
+  revalidatePath(ROUTES.photos);
   if (dayId) {
     revalidatePath(ROUTES.travelDay(tripId, dayId));
   }
@@ -153,7 +159,20 @@ export async function deleteNote(
     if (day.trip.id !== tripId) {
       return { error: "Travel day not found." };
     }
+
+    // Memo photos use onDelete: SetNull — delete them explicitly so they
+    // do not reappear in the day's photo memory section.
+    const memoPhotos = await findPhotosByNoteId(noteId, dayId);
+    await deletePhotosByNoteId(noteId, dayId);
     await deleteNoteRecord(noteId, dayId);
+    for (const photo of memoPhotos) {
+      try {
+        await deleteTravelPhoto(photo.storagePath);
+      } catch {
+        // DB records removed; storage cleanup failure is non-fatal.
+      }
+    }
+
     revalidateDayPaths(tripId, dayId);
     return { success: true };
   } catch (error) {
