@@ -20,10 +20,15 @@ function createPrismaClient() {
     });
   }
 
-  const pool = globalForPrisma.pgPool ?? new Pool({ connectionString });
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.pgPool = pool;
-  }
+  const pool =
+    globalForPrisma.pgPool ??
+    new Pool({
+      connectionString,
+      // One connection per serverless instance avoids pool exhaustion on Vercel.
+      max: process.env.VERCEL ? 1 : 10,
+      idleTimeoutMillis: 20_000,
+    });
+  globalForPrisma.pgPool = pool;
 
   return new PrismaClient({
     adapter: new PrismaPg(pool),
@@ -36,6 +41,4 @@ function createPrismaClient() {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+globalForPrisma.prisma = prisma;

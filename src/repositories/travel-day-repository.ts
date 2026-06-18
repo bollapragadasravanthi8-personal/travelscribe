@@ -27,10 +27,8 @@ const travelDayDetailInclude = {
     },
   },
   photos: {
+    where: { noteId: null },
     orderBy: [{ sortOrder: "asc" as const }, { createdAt: "asc" as const }],
-    include: {
-      note: { select: { id: true, content: true } },
-    },
   },
   expenses: {
     orderBy: { createdAt: "asc" as const },
@@ -55,6 +53,15 @@ export async function createTravelDay(input: CreateTravelDayInput) {
 
 export async function findTravelDayById(id: string) {
   return prisma.travelDay.findUnique({ where: { id } });
+}
+
+/** Lightweight ownership check for layouts — avoids loading full day graph. */
+export async function isTravelDayOwnedByUser(dayId: string, userId: string) {
+  const day = await prisma.travelDay.findFirst({
+    where: { id: dayId, trip: { userId } },
+    select: { id: true },
+  });
+  return day !== null;
 }
 
 export async function findTravelDayByIdForUser(

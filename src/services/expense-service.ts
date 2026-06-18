@@ -1,4 +1,6 @@
 import { serializeExpenseForClient } from "@/lib/format";
+import { cache } from "react";
+
 import {
   aggregateExpenseTotalsByTripId,
   countExpensesByTripId,
@@ -13,7 +15,7 @@ import {
 } from "@/repositories/expense-repository";
 import { findTripByIdForUser } from "@/repositories/trip-repository";
 import { findTravelDayByIdForUser } from "@/repositories/travel-day-repository";
-import { TripNotFoundError } from "@/services/trip-service";
+import { getTripForUser, TripNotFoundError } from "@/services/trip-service";
 import { TravelDayNotFoundError } from "@/services/travel-day-service";
 
 export class ExpenseNotFoundError extends Error {
@@ -31,19 +33,18 @@ async function assertTravelDayForUser(dayId: string, userId: string) {
   return day;
 }
 
-export async function getTripExpenseSummary(tripId: string, userId: string) {
-  const trip = await findTripByIdForUser(tripId, userId);
-  if (!trip) {
-    throw new TripNotFoundError();
-  }
+export const getTripExpenseSummary = cache(
+  async (tripId: string, userId: string) => {
+    await getTripForUser(tripId, userId);
 
-  const [count, totals] = await Promise.all([
-    countExpensesByTripId(tripId),
-    aggregateExpenseTotalsByTripId(tripId),
-  ]);
+    const [count, totals] = await Promise.all([
+      countExpensesByTripId(tripId),
+      aggregateExpenseTotalsByTripId(tripId),
+    ]);
 
-  return { count, totals };
-}
+    return { count, totals };
+  },
+);
 
 export async function listExpensesForTrip(tripId: string, userId: string) {
   const trip = await findTripByIdForUser(tripId, userId);

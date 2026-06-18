@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-import { findTripByIdForUser } from "@/repositories/trip-repository";
+import { isTripOwnedByUser } from "@/repositories/trip-repository";
 
 type TripLayoutProps = {
   children: React.ReactNode;
@@ -12,9 +12,9 @@ type TripLayoutProps = {
 export default async function TripLayout({ children, params }: TripLayoutProps) {
   const user = await getCurrentUser();
   const { tripId } = await params;
-  const trip = await findTripByIdForUser(tripId, user.id);
+  const owned = await isTripOwnedByUser(tripId, user.id);
 
-  if (!trip) {
+  if (!owned) {
     notFound();
   }
 

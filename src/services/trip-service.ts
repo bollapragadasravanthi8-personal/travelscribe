@@ -1,7 +1,10 @@
+import { cache } from "react";
+
 import {
   createTrip as createTripRecord,
   deleteTrip as deleteTripRecord,
   findTripByIdForUser,
+  findTripTitlesForUser,
   findTripsForUser,
   updateTrip as updateTripRecord,
   type CreateTripInput,
@@ -23,13 +26,18 @@ async function assertTripForUser(tripId: string, userId: string) {
   return trip;
 }
 
-export async function listTripsForUser(userId: string) {
+export const listTripsForUser = cache(async (userId: string) => {
   return findTripsForUser(userId);
-}
+});
 
-export async function getTripForUser(tripId: string, userId: string) {
+/** Lightweight trip list for nav / FAB — id + title only. */
+export const listTripTitlesForUser = cache(async (userId: string) => {
+  return findTripTitlesForUser(userId);
+});
+
+export const getTripForUser = cache(async (tripId: string, userId: string) => {
   return assertTripForUser(tripId, userId);
-}
+});
 
 export async function createTripForUser(
   userId: string,

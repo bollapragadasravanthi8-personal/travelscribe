@@ -7,7 +7,7 @@ import {
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileShell } from "@/components/mobile/mobile-shell";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-import { listTripsForUser } from "@/services/trip-service";
+import { listTripTitlesForUser } from "@/services/trip-service";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -15,8 +15,8 @@ type AppShellProps = {
 
 export async function AppShell({ children }: AppShellProps) {
   const user = await getCurrentUser();
-  const trips = await listTripsForUser(user.id);
-  const tripOptions = trips.map((trip) => ({ id: trip.id, title: trip.title }));
+  const trips = await listTripTitlesForUser(user.id);
+  const tripOptions = trips;
   const navItems = [...mainNavItems, ...secondaryNavItems];
 
   return (

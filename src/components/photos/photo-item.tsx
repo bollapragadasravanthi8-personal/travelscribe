@@ -69,7 +69,6 @@ export function PhotoItem({
           fill
           sizes={sizes}
           className="object-cover transition-transform group-hover:scale-[1.02]"
-          unoptimized
         />
       </button>
 

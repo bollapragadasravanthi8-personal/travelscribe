@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { serializeExpenseForClient } from "@/lib/format";
 import {
   createTravelDay as createTravelDayRecord,
@@ -27,12 +29,19 @@ async function assertTripOwnedByUser(tripId: string, userId: string) {
   return trip;
 }
 
-export async function listTravelDaysForTrip(tripId: string, userId: string) {
-  await assertTripOwnedByUser(tripId, userId);
-  return findTravelDaysByTripId(tripId);
-}
+export const listTravelDaysForTrip = cache(
+  async (tripId: string, userId: string) => {
+    await assertTripOwnedByUser(tripId, userId);
+    return findTravelDaysByTripId(tripId);
+  },
+);
 
-export async function getTravelDayForUser(dayId: string, userId: string) {
+/** Use when trip ownership was already verified (layout/page). */
+export const listTravelDaysForVerifiedTrip = cache(async (tripId: string) => {
+  return findTravelDaysByTripId(tripId);
+});
+
+export const getTravelDayForUser = cache(async (dayId: string, userId: string) => {
   const day = await findTravelDayByIdForUser(dayId, userId);
   if (!day) {
     throw new TravelDayNotFoundError();
@@ -41,7 +50,7 @@ export async function getTravelDayForUser(dayId: string, userId: string) {
     ...day,
     expenses: day.expenses.map(serializeExpenseForClient),
   };
-}
+});
 
 export async function createTravelDayForTrip(
   tripId: string,

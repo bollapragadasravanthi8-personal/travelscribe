@@ -31,7 +31,7 @@ import {
 } from "@/lib/format";
 import { getTripExpenseSummary } from "@/services/expense-service";
 import { getTripForUser } from "@/services/trip-service";
-import { listTravelDaysForTrip } from "@/services/travel-day-service";
+import { listTravelDaysForVerifiedTrip } from "@/services/travel-day-service";
 import type { PageParams } from "@/types";
 import { OfflinePageCache } from "@/components/mobile/offline-page-cache";
 import {
@@ -62,9 +62,9 @@ export default async function TripDetailsPage({ params }: TripDetailsPageProps) 
   let days;
   let expenseSummary;
   try {
-    trip = await getTripForUser(tripId, user.id);
-    [days, expenseSummary] = await Promise.all([
-      listTravelDaysForTrip(tripId, user.id),
+    [trip, days, expenseSummary] = await Promise.all([
+      getTripForUser(tripId, user.id),
+      listTravelDaysForVerifiedTrip(tripId),
       getTripExpenseSummary(tripId, user.id),
     ]);
   } catch {
@@ -127,7 +127,6 @@ export default async function TripDetailsPage({ params }: TripDetailsPageProps) 
             sizes="(max-width: 768px) 100vw, 960px"
             className="object-cover"
             priority
-            unoptimized
           />
         </div>
       )}

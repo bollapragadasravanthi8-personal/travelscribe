@@ -149,7 +149,12 @@ export default async function TravelDayDetailsPage({
               aiCaption: photo.aiCaption,
             })),
           })),
-          photos: day.photos,
+          photos: day.photos.map((photo) => ({
+            id: photo.id,
+            url: photo.url,
+            caption: photo.caption,
+            aiCaption: photo.aiCaption,
+          })),
           expenses: day.expenses,
         }}
       />

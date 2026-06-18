@@ -39,12 +39,25 @@ export async function findRecentTravelDaysForUser(userId: string, limit = 5) {
 }
 
 export async function getDashboardDataForUser(userId: string) {
-  const [trips, recentDays, expenseTotals] = await Promise.all([
+  const [trips, recentDays, expenseTotals, countRows] = await Promise.all([
     findTripsForUser(userId),
     findRecentTravelDaysForUser(userId),
     aggregateExpenseTotalsForUser(userId),
+    Promise.all([
+      prisma.photo.count({ where: { travelDay: { trip: { userId } } } }),
+      prisma.expense.count({ where: { travelDay: { trip: { userId } } } }),
+      prisma.travelDay.count({ where: { trip: { userId } } }),
+    ]),
   ]);
-  const stats = await getDashboardCountsForUser(userId, trips);
+
+  const [photoCount, expenseCount, daysLoggedCount] = countRows;
+  const stats = {
+    tripCount: trips.length,
+    travelDayCount: sumTripDurationDays(trips),
+    daysLoggedCount,
+    photoCount,
+    expenseCount,
+  };
 
   return { stats, trips, recentDays, expenseTotals };
 }

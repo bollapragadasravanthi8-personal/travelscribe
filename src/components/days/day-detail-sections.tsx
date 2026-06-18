@@ -43,7 +43,6 @@ type DaySectionData = {
     url: string;
     caption: string | null;
     aiCaption: string | null;
-    note: { id: string; content: string } | null;
   }[];
   expenses: {
     id: string;
@@ -56,7 +55,7 @@ type DaySectionData = {
 
 export function DayDetailSections({ data }: { data: DaySectionData }) {
   const expenseTotals = summarizeExpensesByCurrency(data.expenses);
-  const dayPhotos = data.photos.filter((photo) => !photo.note);
+  const dayPhotos = data.photos;
 
   return (
     <Accordion

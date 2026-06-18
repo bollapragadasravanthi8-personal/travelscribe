@@ -1,5 +1,7 @@
+import { cache } from "react";
+
 import { getDashboardDataForUser } from "@/repositories/dashboard-repository";
 
-export async function getDashboardOverviewForUser(userId: string) {
+export const getDashboardOverviewForUser = cache(async (userId: string) => {
   return getDashboardDataForUser(userId);
-}
+});

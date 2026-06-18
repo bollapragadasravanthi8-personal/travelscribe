@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-import { findTravelDayByIdForUser } from "@/repositories/travel-day-repository";
+import { isTravelDayOwnedByUser } from "@/repositories/travel-day-repository";
 
 type TravelDayLayoutProps = {
   children: React.ReactNode;
@@ -15,9 +15,9 @@ export default async function TravelDayLayout({
 }: TravelDayLayoutProps) {
   const user = await getCurrentUser();
   const { dayId } = await params;
-  const day = await findTravelDayByIdForUser(dayId, user.id);
+  const owned = await isTravelDayOwnedByUser(dayId, user.id);
 
-  if (!day) {
+  if (!owned) {
     notFound();
   }
 

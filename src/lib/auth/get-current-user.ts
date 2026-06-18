@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type { User } from "@/generated/prisma/client";
 
 import { requireSessionUser } from "@/lib/auth/session";
@@ -15,7 +17,7 @@ function readMetadataString(
 }
 
 /** Resolve the Prisma user for the current Supabase session, creating if needed. */
-export async function getCurrentUser(): Promise<User> {
+export const getCurrentUser = cache(async (): Promise<User> => {
   const sessionUser = await requireSessionUser();
 
   const existing = await findUserByAuthId(sessionUser.id);
@@ -36,4 +38,4 @@ export async function getCurrentUser(): Promise<User> {
       readMetadataString(sessionUser.user_metadata, "full_name"),
     avatarUrl: readMetadataString(sessionUser.user_metadata, "avatar_url"),
   });
-}
+});
