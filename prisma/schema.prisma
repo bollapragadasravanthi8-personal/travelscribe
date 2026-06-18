@@ -1,0 +1,140 @@
+// TravelScribe database schema
+// Maps to Supabase PostgreSQL via Prisma ORM
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// User — synced with Supabase Auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  authId    String   @unique // Supabase auth.users.id
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trips Trip[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Trip
+// ---------------------------------------------------------------------------
+
+model Trip {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  country       String?
+  startDate     DateTime?
+  endDate       DateTime?
+  coverImageUrl String?
+  aiStory       String?   @db.Text // AI-generated trip narrative
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  days TravelDay[]
+
+  @@index([userId])
+  @@map("trips")
+}
+
+// ---------------------------------------------------------------------------
+// TravelDay — one entry per day of a trip
+// ---------------------------------------------------------------------------
+
+model TravelDay {
+  id        String    @id @default(cuid())
+  tripId    String
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  dayNumber Int
+  date      DateTime?
+  title     String?
+  location  String?
+  aiSummary String?   @db.Text // AI-generated day summary
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  notes    Note[]
+  photos   Photo[]
+  expenses Expense[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+  @@map("travel_days")
+}
+
+// ---------------------------------------------------------------------------
+// Note / Memo
+// ---------------------------------------------------------------------------
+
+model Note {
+  id          String    @id @default(cuid())
+  travelDayId String
+  travelDay   TravelDay @relation(fields: [travelDayId], references: [id], onDelete: Cascade)
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  photos Photo[]
+
+  @@index([travelDayId])
+  @@map("notes")
+}
+
+// ---------------------------------------------------------------------------
+// Photo — stored in Supabase Storage
+// Always tagged to a travel day; optionally linked to a memo (Note).
+// When noteId is set, travelDayId must match Note.travelDayId (enforced in service layer).
+// ---------------------------------------------------------------------------
+
+model Photo {
+  id          String    @id @default(cuid())
+  travelDayId String
+  travelDay   TravelDay @relation(fields: [travelDayId], references: [id], onDelete: Cascade)
+  noteId      String?
+  note        Note?     @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  storagePath String    // Supabase Storage object path
+  url         String
+  caption     String?
+  aiCaption   String?   // AI-generated caption (Feature 2)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([travelDayId])
+  @@index([noteId])
+  @@index([travelDayId, noteId])
+  @@map("photos")
+}
+
+// ---------------------------------------------------------------------------
+// Expense
+// ---------------------------------------------------------------------------
+
+model Expense {
+  id          String    @id @default(cuid())
+  travelDayId String
+  travelDay   TravelDay @relation(fields: [travelDayId], references: [id], onDelete: Cascade)
+  amount      Decimal   @db.Decimal(10, 2)
+  currency    String    @default("USD")
+  category    String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([travelDayId])
+  @@map("expenses")
+}
