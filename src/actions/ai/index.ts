@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { rethrowIfRedirect } from "@/lib/action-errors";
+import { formatAiError } from "@/lib/ai/format-ai-error";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROUTES } from "@/lib/constants";
 import { generateDaySummaryForUser } from "@/services/day-summary-service";
@@ -36,7 +37,9 @@ export async function generateDaySummary(
     return { success: true, summary, text: summary };
   } catch (error) {
     rethrowIfRedirect(error);
-    return { error: "Unable to generate day summary. Please try again." };
+    return {
+      error: formatAiError(error, "Unable to generate day summary. Please try again."),
+    };
   }
 }
 
@@ -58,7 +61,9 @@ export async function generatePhotoCaption(
     return { success: true, caption, text: caption };
   } catch (error) {
     rethrowIfRedirect(error);
-    return { error: "Unable to generate photo caption. Please try again." };
+    return {
+      error: formatAiError(error, "Unable to generate photo caption. Please try again."),
+    };
   }
 }
 
@@ -78,6 +83,8 @@ export async function generateTripStory(
     return { success: true, story, text: story };
   } catch (error) {
     rethrowIfRedirect(error);
-    return { error: "Unable to generate trip story. Please try again." };
+    return {
+      error: formatAiError(error, "Unable to generate trip story. Please try again."),
+    };
   }
 }
