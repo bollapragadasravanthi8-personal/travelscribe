@@ -110,8 +110,8 @@ export async function compressImageFile(
 
 /** Compress an image file and return a new File ready for upload. */
 export async function compressImageForUpload(file: File): Promise<File> {
-  const { blob, mimeType } = await compressImageFile(file);
-  const extension = mimeType.split("/")[1] ?? "jpg";
+  // Always normalize to JPEG so mobile HEIC/unknown types upload reliably.
+  const { blob } = await compressImageFile(file, { mimeType: "image/jpeg" });
   const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
-  return new File([blob], `${baseName}.${extension}`, { type: mimeType });
+  return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
 }

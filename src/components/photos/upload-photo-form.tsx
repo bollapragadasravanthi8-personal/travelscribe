@@ -6,7 +6,7 @@ import { Camera, ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { uploadPhoto, type PhotoActionState } from "@/actions/photos";
 import { StickyFormFooter } from "@/components/mobile/sticky-form-footer";
 import { Button } from "@/components/ui/button";
-import { ALLOWED_PHOTO_TYPES } from "@/lib/constants";
+import { compressImageForUpload } from "@/lib/image/compress-image";
 import { cn } from "@/lib/utils";
 
 const initialState: PhotoActionState = {};
@@ -23,9 +23,11 @@ type UploadPhotoFormProps = {
 };
 
 function isAllowedPhotoType(file: File) {
-  return ALLOWED_PHOTO_TYPES.includes(
-    file.type as (typeof ALLOWED_PHOTO_TYPES)[number],
-  );
+  if (file.type.startsWith("image/")) {
+    return true;
+  }
+  // iOS sometimes omits MIME type; fall back to extension.
+  return /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
 }
 
 export function UploadPhotoForm({
@@ -42,7 +44,9 @@ export function UploadPhotoForm({
   const [expanded, setExpanded] = useState(!linkedNoteId);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [pickError, setPickError] = useState<string | null>(null);
+  const [compressing, setCompressing] = useState(false);
   const [state, formAction, pending] = useActionState(uploadPhoto, initialState);
+  const isBusy = pending || compressing;
   const isMemoUpload = Boolean(linkedNoteId);
   const formId = linkedNoteId
     ? `upload-photo-memo-${linkedNoteId}`
@@ -87,23 +91,38 @@ export function UploadPhotoForm({
     event.target.value = "";
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (selectedFiles.length === 0) {
       setPickError("Take or choose at least one photo.");
       return;
     }
 
-    const formData = new FormData();
-    formData.set("tripId", tripId);
-    formData.set("dayId", dayId);
-    if (linkedNoteId) {
-      formData.set("noteId", linkedNoteId);
+    setCompressing(true);
+    setPickError(null);
+
+    try {
+      const preparedFiles = await Promise.all(
+        selectedFiles.map((file) => compressImageForUpload(file)),
+      );
+
+      const formData = new FormData();
+      formData.set("tripId", tripId);
+      formData.set("dayId", dayId);
+      if (linkedNoteId) {
+        formData.set("noteId", linkedNoteId);
+      }
+      for (const file of preparedFiles) {
+        formData.append("files", file);
+      }
+      formAction(formData);
+    } catch {
+      setPickError(
+        "Could not prepare photos for upload. Try again with smaller images.",
+      );
+    } finally {
+      setCompressing(false);
     }
-    for (const file of selectedFiles) {
-      formData.append("files", file);
-    }
-    formAction(formData);
   }
 
   if (linkedNoteId && !expanded) {
@@ -170,7 +189,7 @@ export function UploadPhotoForm({
       <input
         ref={galleryInputRef}
         type="file"
-        accept={ALLOWED_PHOTO_TYPES.join(",")}
+        accept="image/*"
         multiple
         className="sr-only"
         onChange={handleGalleryChange}
@@ -183,7 +202,7 @@ export function UploadPhotoForm({
           type="button"
           variant="outline"
           className="h-11 justify-start gap-2"
-          disabled={pending}
+          disabled={isBusy}
           onClick={() => cameraInputRef.current?.click()}
         >
           <Camera className="size-4" />
@@ -193,7 +212,7 @@ export function UploadPhotoForm({
           type="button"
           variant="outline"
           className="h-11 justify-start gap-2"
-          disabled={pending}
+          disabled={isBusy}
           onClick={() => galleryInputRef.current?.click()}
         >
           <ImagePlus className="size-4" />
@@ -216,7 +235,7 @@ export function UploadPhotoForm({
             variant="ghost"
             size="icon-sm"
             aria-label="Clear selected photos"
-            disabled={pending}
+            disabled={isBusy}
             onClick={() => setSelectedFiles([])}
           >
             <X className="size-4" />
@@ -236,12 +255,12 @@ export function UploadPhotoForm({
           <Button
             type="submit"
             className="h-11 sm:w-auto"
-            disabled={pending || selectedFiles.length === 0}
+            disabled={isBusy || selectedFiles.length === 0}
           >
-            {pending ? (
+            {isBusy ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Uploading…
+                {compressing ? "Preparing…" : "Uploading…"}
               </>
             ) : (
               <>
@@ -260,7 +279,7 @@ export function UploadPhotoForm({
                 setPickError(null);
                 setExpanded(false);
               }}
-              disabled={pending}
+              disabled={isBusy}
             >
               Cancel
             </Button>

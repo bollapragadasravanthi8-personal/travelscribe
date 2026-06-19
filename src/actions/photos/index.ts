@@ -58,6 +58,8 @@ function validatePhotoFile(file: File): string | null {
     return `"${file.name}" exceeds the maximum upload size.`;
   }
   if (
+    file.type &&
+    !file.type.startsWith("image/") &&
     !ALLOWED_PHOTO_TYPES.includes(
       file.type as (typeof ALLOWED_PHOTO_TYPES)[number],
     )
