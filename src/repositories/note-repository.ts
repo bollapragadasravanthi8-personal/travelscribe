@@ -12,6 +12,17 @@ export async function deleteNote(noteId: string, travelDayId: string) {
   });
 }
 
+export async function updateNote(
+  noteId: string,
+  travelDayId: string,
+  content: string,
+) {
+  return prisma.note.updateMany({
+    where: { id: noteId, travelDayId },
+    data: { content },
+  });
+}
+
 export async function findNoteById(noteId: string) {
   return prisma.note.findUnique({
     where: { id: noteId },

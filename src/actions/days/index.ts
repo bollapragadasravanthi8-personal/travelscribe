@@ -7,7 +7,7 @@ import { rethrowIfRedirect } from "@/lib/action-errors";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROUTES } from "@/lib/constants";
 import { parseFormDate } from "@/lib/format";
-import { createNote, deleteNote as deleteNoteRecord } from "@/repositories/note-repository";
+import { createNote, deleteNote as deleteNoteRecord, updateNote as updateNoteRecord } from "@/repositories/note-repository";
 import {
   deletePhotosByNoteId,
   findPhotosByNoteId,
@@ -178,5 +178,37 @@ export async function deleteNote(
   } catch (error) {
     rethrowIfRedirect(error);
     return { error: "Unable to delete memo. Please try again." };
+  }
+}
+
+export async function updateNote(
+  _prevState: DayActionState,
+  formData: FormData,
+): Promise<DayActionState> {
+  const { tripId, dayId } = readIds(formData);
+  const noteId = String(formData.get("noteId") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+  if (!tripId || !dayId || !noteId) {
+    return { error: "Memo not found." };
+  }
+  if (!content) {
+    return { error: "Memo content is required." };
+  }
+
+  try {
+    const user = await getCurrentUser();
+    const day = await getTravelDayForUser(dayId, user.id);
+    if (day.trip.id !== tripId) {
+      return { error: "Travel day not found." };
+    }
+    const result = await updateNoteRecord(noteId, dayId, content);
+    if (result.count === 0) {
+      return { error: "Memo not found." };
+    }
+    revalidateDayPaths(tripId, dayId);
+    return { success: true };
+  } catch (error) {
+    rethrowIfRedirect(error);
+    return { error: "Unable to update memo. Please try again." };
   }
 }

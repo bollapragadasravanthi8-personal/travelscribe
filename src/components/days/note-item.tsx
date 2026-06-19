@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
 import { deleteNote, type DayActionState } from "@/actions/days";
+import { EditNoteDialog } from "@/components/days/edit-note-dialog";
 import { MemoPhotoStrip } from "@/components/days/memo-photo-strip";
 import { UploadPhotoForm } from "@/components/photos/upload-photo-form";
 import { Button } from "@/components/ui/button";
@@ -51,9 +52,16 @@ export function NoteItem({ tripId, dayId, note, className }: NoteItemProps) {
         tripId={tripId}
         dayId={dayId}
         linkedNoteId={note.id}
+        hasExistingPhotos={photos.length > 0}
       />
 
-      <div className="mt-3 flex items-center justify-end gap-2">
+      <div className="mt-3 flex items-center justify-end gap-1">
+        <EditNoteDialog
+          tripId={tripId}
+          dayId={dayId}
+          noteId={note.id}
+          defaultContent={note.content}
+        />
         <form action={formAction}>
           <input type="hidden" name="tripId" value={tripId} />
           <input type="hidden" name="dayId" value={dayId} />

@@ -104,7 +104,7 @@ export function DayDetailSections({ data }: { data: DaySectionData }) {
           {dayPhotos.length === 0 ? (
             <EmptyState
               title="No photo memories yet"
-              description="Add extra photos for this day below, or attach photos directly to a memo."
+              description="Add photos below or attach them to a memo — all day photos appear here."
               className="py-6"
             />
           ) : (

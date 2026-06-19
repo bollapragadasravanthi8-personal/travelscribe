@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Camera, ImagePlus, Loader2, X } from "lucide-react";
+import { Camera, ImagePlus, Loader2, Plus, X } from "lucide-react";
 
 import { uploadPhoto, type PhotoActionState } from "@/actions/photos";
 import { StickyFormFooter } from "@/components/mobile/sticky-form-footer";
@@ -16,6 +16,8 @@ type UploadPhotoFormProps = {
   dayId: string;
   /** When set, photos are attached to this memo. Otherwise they are photo memories for the day. */
   linkedNoteId?: string;
+  /** When true and collapsed, show a compact "+" instead of full label. */
+  hasExistingPhotos?: boolean;
   onSuccess?: () => void;
   className?: string;
 };
@@ -30,6 +32,7 @@ export function UploadPhotoForm({
   tripId,
   dayId,
   linkedNoteId,
+  hasExistingPhotos = false,
   onSuccess,
   className,
 }: UploadPhotoFormProps) {
@@ -104,6 +107,21 @@ export function UploadPhotoForm({
   }
 
   if (linkedNoteId && !expanded) {
+    if (hasExistingPhotos) {
+      return (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          className={cn("mt-3 size-9 shrink-0", className)}
+          aria-label="Add more photos to memo"
+          onClick={() => setExpanded(true)}
+        >
+          <Plus className="size-4" />
+        </Button>
+      );
+    }
+
     return (
       <Button
         type="button"

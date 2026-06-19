@@ -6,14 +6,13 @@ import { ArrowLeft, Calendar, MapPin, Sparkles } from "lucide-react";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { CreateTravelDayDialog } from "@/components/days/create-travel-day-dialog";
-import { TravelDayCard } from "@/components/days/travel-day-card";
+import { TripJournalTimeline } from "@/components/trips/trip-journal-timeline";
 import { AiStorySection } from "@/components/trips/ai-story-section";
 import { DeleteTripButton } from "@/components/trips/delete-trip-button";
 import { EditTripDialog } from "@/components/trips/edit-trip-dialog";
-import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants, Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -31,7 +30,7 @@ import {
 } from "@/lib/format";
 import { getTripExpenseSummary } from "@/services/expense-service";
 import { getTripForUser } from "@/services/trip-service";
-import { listTravelDaysForVerifiedTrip } from "@/services/travel-day-service";
+import { listTravelDaysForVerifiedTrip, getTripJournalDays } from "@/services/travel-day-service";
 import type { PageParams } from "@/types";
 import { OfflinePageCache } from "@/components/mobile/offline-page-cache";
 import {
@@ -60,11 +59,13 @@ export default async function TripDetailsPage({ params }: TripDetailsPageProps) 
 
   let trip;
   let days;
+  let journalDays;
   let expenseSummary;
   try {
-    [trip, days, expenseSummary] = await Promise.all([
+    [trip, days, journalDays, expenseSummary] = await Promise.all([
       getTripForUser(tripId, user.id),
       listTravelDaysForVerifiedTrip(tripId),
+      getTripJournalDays(tripId),
       getTripExpenseSummary(tripId, user.id),
     ]);
   } catch {
@@ -239,31 +240,17 @@ export default async function TripDetailsPage({ params }: TripDetailsPageProps) 
       </Card>
 
       <section className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Day journal</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Trip journal</h2>
+            <p className="text-sm text-muted-foreground">
+              All days, memos, and photos for this trip
+            </p>
+          </div>
           <CreateTravelDayDialog tripId={trip.id} />
         </div>
 
-        {days.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="No travel days"
-            description="Add days to this trip to log notes, photos, and expenses."
-          >
-            <CreateTravelDayDialog
-              tripId={trip.id}
-              trigger={
-                <Button>Add first day</Button>
-              }
-            />
-          </EmptyState>
-        ) : (
-          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-            {days.map((day) => (
-              <TravelDayCard key={day.id} tripId={trip.id} day={day} />
-            ))}
-          </div>
-        )}
+        <TripJournalTimeline tripId={trip.id} days={journalDays} />
       </section>
     </>
   );

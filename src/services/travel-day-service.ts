@@ -6,6 +6,7 @@ import {
   deleteTravelDay as deleteTravelDayRecord,
   findTravelDayByIdForUser,
   findTravelDaysByTripId,
+  findTravelDaysJournalForTrip,
   getNextDayNumberForTrip,
   updateTravelDay as updateTravelDayRecord,
   type CreateTravelDayInput,
@@ -39,6 +40,10 @@ export const listTravelDaysForTrip = cache(
 /** Use when trip ownership was already verified (layout/page). */
 export const listTravelDaysForVerifiedTrip = cache(async (tripId: string) => {
   return findTravelDaysByTripId(tripId);
+});
+
+export const getTripJournalDays = cache(async (tripId: string) => {
+  return findTravelDaysJournalForTrip(tripId);
 });
 
 export const getTravelDayForUser = cache(async (dayId: string, userId: string) => {

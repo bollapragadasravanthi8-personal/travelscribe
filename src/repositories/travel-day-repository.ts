@@ -27,7 +27,6 @@ const travelDayDetailInclude = {
     },
   },
   photos: {
-    where: { noteId: null },
     orderBy: [{ sortOrder: "asc" as const }, { createdAt: "asc" as const }],
   },
   expenses: {
@@ -81,6 +80,41 @@ export async function findTravelDaysByTripId(tripId: string) {
     include: {
       _count: {
         select: { notes: true, photos: true, expenses: true },
+      },
+    },
+  });
+}
+
+/** Days with memo previews and photo thumbnails for the trip journal view. */
+export async function findTravelDaysJournalForTrip(tripId: string) {
+  return prisma.travelDay.findMany({
+    where: { tripId },
+    orderBy: { dayNumber: "asc" },
+    select: {
+      id: true,
+      dayNumber: true,
+      title: true,
+      date: true,
+      location: true,
+      notes: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          content: true,
+          photos: {
+            orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+            select: { id: true, url: true, caption: true, aiCaption: true },
+          },
+        },
+      },
+      photos: {
+        where: { noteId: null },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: { id: true, url: true, caption: true, aiCaption: true },
+        take: 6,
+      },
+      _count: {
+        select: { notes: true, photos: true },
       },
     },
   });
